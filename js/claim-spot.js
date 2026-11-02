@@ -12,10 +12,10 @@
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const list = document.querySelector("[data-couples-list]");
-  const openButton = document.querySelector("[data-claim-open]");
+  const openButtons = [...document.querySelectorAll("[data-claim-open]")];
   const spotsLeft = document.querySelector("[data-spots-left]");
   const dialog = document.querySelector("[data-claim-dialog]");
-  if (!list || !openButton || !dialog) return;
+  if (!list || !openButtons.length || !dialog) return;
 
   const form = dialog.querySelector("[data-claim-form]");
   const formError = dialog.querySelector("[data-claim-error]");
@@ -102,6 +102,13 @@
 
   // ---- Couples list ------------------------------------------------------
 
+  function setOpenButtons(disabled, label) {
+    openButtons.forEach(button => {
+      button.disabled = disabled;
+      button.textContent = label;
+    });
+  }
+
   function renderList(highlight) {
     const byNumber = new Map(claims.map(c => [c.number, c]));
     const items = Array.from({ length: TOTAL }, (_, i) => {
@@ -128,14 +135,11 @@
     const open = TOTAL - byNumber.size;
     if (spotsLeft) spotsLeft.textContent = open === 0 ? "All spots have been claimed." : `${open} of ${TOTAL} spots still open.`;
     if (!endpoint && !demo) {
-      openButton.disabled = true;
-      openButton.textContent = "Registration opening soon";
+      setOpenButtons(true, "Registration opening soon");
     } else if (open === 0 && !store.get(CLAIM_KEY)) {
-      openButton.disabled = true;
-      openButton.textContent = "All spots claimed";
+      setOpenButtons(true, "All spots claimed");
     } else {
-      openButton.disabled = false;
-      openButton.textContent = "Claim your spot";
+      setOpenButtons(false, "Claim your spot");
     }
   }
 
@@ -393,7 +397,7 @@
     }
   });
 
-  openButton.addEventListener("click", openDialog);
+  openButtons.forEach(button => button.addEventListener("click", openDialog));
   dialog.querySelectorAll("[data-claim-close]").forEach(button => button.addEventListener("click", closeDialog));
   dialog.addEventListener("cancel", event => { if (spinning) event.preventDefault(); });
   dialog.addEventListener("click", event => { if (event.target === dialog) closeDialog(); });
