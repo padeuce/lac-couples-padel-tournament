@@ -270,3 +270,4 @@ a.fixture-card:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(19,4
 .court-score__footer{margin-top:10px;display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px}
 @media(max-width:760px){.feed-meta{justify-items:start}.fixture-session__grid{grid-template-columns:1fr}.court-score__columns,.court-score__team{grid-template-columns:minmax(0,1fr) repeat(5,34px);gap:4px}.court-score__number{font-size:16px}}
 .hero__claim{text-transform:uppercase;letter-spacing:.1em;font-size:14px}.hero__claim:disabled{cursor:not-allowed;opacity:.6;transform:none}
+.prize-card:nth-child(3){grid-column:1/-1}
