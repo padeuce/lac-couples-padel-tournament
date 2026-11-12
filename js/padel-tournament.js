@@ -71,6 +71,14 @@
       .sort((a, b) => Number(a.stageOrder || 0) - Number(b.stageOrder || 0))
       .map(stage => {
         const eliminated = new Set();
+        const games = new Map();
+        const addGames = (teamId, won, lost) => {
+          if (!teamId) return;
+          const total = games.get(teamId) || { for: 0, against: 0 };
+          total.for += won;
+          total.against += lost;
+          games.set(teamId, total);
+        };
         const rounds = (stage.rounds || [])
           .slice()
           .sort((a, b) => Number(a.roundNumber || 0) - Number(b.roundNumber || 0))
@@ -83,6 +91,13 @@
                 const status = matchStatus(match, liveCodes);
                 const winner = match.winnerTeamId === match.teamAId ? "a" : match.winnerTeamId === match.teamBId ? "b" : "";
                 if (winner) eliminated.add(winner === "a" ? match.teamBId : match.teamAId);
+                const gamesA = (match.teamASets || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+                const gamesB = (match.teamBSets || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+                // Only finished matches count towards the table, matching P/W/L.
+                if (status === "completed") {
+                  addGames(match.teamAId, gamesA, gamesB);
+                  addGames(match.teamBId, gamesB, gamesA);
+                }
                 return {
                   court: match.court,
                   number: Number(match.matchNumber || 0),
@@ -109,12 +124,12 @@
               played: wins + losses,
               wins,
               losses,
-              setsFor: Number(entry.setsFor || 0),
-              setsAgainst: Number(entry.setsAgainst || 0),
+              gamesFor: games.get(entry.teamId)?.for || 0,
+              gamesAgainst: games.get(entry.teamId)?.against || 0,
               out: knockout && (eliminated.has(entry.teamId) || losses > 0)
             };
           })
-          .sort((a, b) => Number(a.out) - Number(b.out) || b.wins - a.wins || (b.setsFor - b.setsAgainst) - (a.setsFor - a.setsAgainst) || (a.position || 99) - (b.position || 99));
+          .sort((a, b) => Number(a.out) - Number(b.out) || b.wins - a.wins || (b.gamesFor - b.gamesAgainst) - (a.gamesFor - a.gamesAgainst) || (a.position || 99) - (b.position || 99));
         return {
           name: stage.name || "Tournament",
           ruleset: stage.rulesetLabel || "",
@@ -219,19 +234,14 @@
       const table = el("table", "standings-live__table");
       const thead = el("thead");
       const headRow = el("tr");
-      ["#", "Team", "P", "W", "L", "Sets", stage.knockout ? "Status" : ""].filter(Boolean).forEach(label => headRow.append(el("th", "", label)));
+      ["#", "Team", "P", "W", "L", "Games"].forEach(label => headRow.append(el("th", "", label)));
       thead.append(headRow);
       const tbody = el("tbody");
       stage.standings.forEach((row, index) => {
         const tr = el("tr", row.out ? "is-out" : "");
         const team = el("td");
         team.append(teamCell(row.team, false));
-        tr.append(el("td", "standings-live__rank", index + 1), team, el("td", "", row.played), el("td", "", row.wins), el("td", "", row.losses), el("td", "", `${row.setsFor}–${row.setsAgainst}`));
-        if (stage.knockout) {
-          const status = el("td");
-          status.append(el("span", `standings-live__pill${row.out ? " is-out" : ""}`, row.out ? "Out" : "In"));
-          tr.append(status);
-        }
+        tr.append(el("td", "standings-live__rank", index + 1), team, el("td", "", row.played), el("td", "", row.wins), el("td", "", row.losses), el("td", "", `${row.gamesFor}–${row.gamesAgainst}`));
         tbody.append(tr);
       });
       table.append(thead, tbody);

@@ -92,17 +92,6 @@
     return ["0", "15", "30", "40"][Math.min(own, 3)];
   }
 
-  function setGames(score, side, setIndex) {
-    const setScore = Array.isArray(score.setScores) ? score.setScores[setIndex] : null;
-    if (setScore) return side === 1 ? setScore.team1 : setScore.team2;
-
-    const completedSets = Number(score.team1Sets || 0) + Number(score.team2Sets || 0);
-    if (completedSets === setIndex) {
-      return side === 1 ? score.team1Games : score.team2Games;
-    }
-    return "–";
-  }
-
   function createTeamRow(name, side, score) {
     const row = createElement("div", "court-score__team");
     const teamName = createElement("div", "court-score__name", name || `Team ${side}`);
@@ -115,9 +104,6 @@
 
     row.append(
       teamName,
-      createScoreNumber(setGames(score, side, 0)),
-      createScoreNumber(setGames(score, side, 1)),
-      createScoreNumber(side === 1 ? score.team1Sets : score.team2Sets),
       createScoreNumber(side === 1 ? score.team1Games : score.team2Games),
       createScoreNumber(formatPoints(score, side), true)
     );
@@ -138,7 +124,7 @@
     status.append(state, createElement("span", "court-score__set", completed ? "Completed" : `Set ${currentSet}`));
 
     const columns = createElement("div", "court-score__columns");
-    ["Team", "Set 1", "Set 2", "Sets", "Games", "Points"].forEach(label => columns.append(createElement("span", "", label)));
+    ["Team", "Games", "Points"].forEach(label => columns.append(createElement("span", "", label)));
 
     const footer = createElement("div", "court-score__footer");
     const updated = new Date(match.lastActivityAt || courtMatch.lastActivityAt || Date.now());
