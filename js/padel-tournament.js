@@ -190,7 +190,8 @@
       stage.rounds.forEach(round => {
         const block = el("div", "fixture-session");
         const label = el("div", "fixture-session__head");
-        label.append(el("b", "", `Session ${round.number}`), el("span", "", `${round.matches.length} ${round.matches.length === 1 ? "match" : "matches"}`));
+        const sessionLabel = round.number === 1 ? "Session 1 starting 16:00" : `Followed by Session ${round.number}`;
+        label.append(el("b", "", sessionLabel), el("span", "", `${round.matches.length} ${round.matches.length === 1 ? "match" : "matches"}`));
         const grid = el("div", "fixture-session__grid");
         round.matches.forEach(match => grid.append(fixtureCard(match)));
         block.append(label, grid);
