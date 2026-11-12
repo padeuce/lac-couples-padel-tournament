@@ -91,8 +91,11 @@
                 const status = matchStatus(match, liveCodes);
                 const winner = match.winnerTeamId === match.teamAId ? "a" : match.winnerTeamId === match.teamBId ? "b" : "";
                 if (winner) eliminated.add(winner === "a" ? match.teamBId : match.teamAId);
-                const gamesA = (match.teamASets || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
-                const gamesB = (match.teamBSets || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+                // Matches are one set, so only the first set counts (Padeuce can repeat it in later entries).
+                const setsA = Array.isArray(match.teamASets) ? match.teamASets.slice(0, 1) : [];
+                const setsB = Array.isArray(match.teamBSets) ? match.teamBSets.slice(0, 1) : [];
+                const gamesA = Number(setsA[0]) || 0;
+                const gamesB = Number(setsB[0]) || 0;
                 // Only finished matches count towards the table, matching P/W/L.
                 if (status === "completed") {
                   addGames(match.teamAId, gamesA, gamesB);
@@ -105,8 +108,8 @@
                   winner,
                   a: teamInfo(teams.get(match.teamAId)),
                   b: teamInfo(teams.get(match.teamBId)),
-                  setsA: Array.isArray(match.teamASets) ? match.teamASets : [],
-                  setsB: Array.isArray(match.teamBSets) ? match.teamBSets : [],
+                  setsA,
+                  setsB,
                   url: match.scorerShareCode ? `https://padeuce.com/match/${encodeURIComponent(match.scorerShareCode)}/results` : ""
                 };
               })
