@@ -71,6 +71,7 @@
       .sort((a, b) => Number(a.stageOrder || 0) - Number(b.stageOrder || 0))
       .map(stage => {
         const eliminated = new Set();
+        const inDraw = new Set();
         const games = new Map();
         const addGames = (teamId, won, lost) => {
           if (!teamId) return;
@@ -91,6 +92,7 @@
                 const status = matchStatus(match, liveCodes);
                 const winner = match.winnerTeamId === match.teamAId ? "a" : match.winnerTeamId === match.teamBId ? "b" : "";
                 if (winner) eliminated.add(winner === "a" ? match.teamBId : match.teamAId);
+                [match.teamAId, match.teamBId].filter(Boolean).forEach(id => inDraw.add(id));
                 // Matches are one set, so only the first set counts (Padeuce can repeat it in later entries).
                 const setsA = Array.isArray(match.teamASets) ? match.teamASets.slice(0, 1) : [];
                 const setsB = Array.isArray(match.teamBSets) ? match.teamBSets.slice(0, 1) : [];
@@ -116,7 +118,9 @@
           }))
           .filter(round => round.matches.length);
         const knockout = /ELIM|KNOCK/i.test(String(stage.format || ""));
+        // Padeuce lists every team in each stage's table; only keep the couples drawn into this stage.
         const standings = (stage.standings || [])
+          .filter(entry => !inDraw.size || inDraw.has(entry.teamId))
           .map(entry => {
             const team = teams.get(entry.teamId);
             const wins = Number(entry.wins || 0);
@@ -196,7 +200,7 @@
       scheduleRoot.replaceChildren(empty("Match info not available", "Fixtures will appear here as soon as the draw is published on Padeuce."));
       return;
     }
-    const parts = stages.map(stage => {
+    const parts = stages.map((stage, stageIndex) => {
       const wrap = el("section", "fixture-stage");
       const head = el("header", "fixture-stage__head");
       const matches = stage.rounds.reduce((total, round) => total + round.matches.length, 0);
@@ -208,7 +212,9 @@
       stage.rounds.forEach(round => {
         const block = el("div", "fixture-session");
         const label = el("div", "fixture-session__head");
-        const sessionLabel = round.number === 1 ? "Session 1 starting 16:00" : `Followed by Session ${round.number}`;
+        const sessionLabel = round.number === 1
+          ? (stageIndex === 0 ? "Session 1 starting 16:00" : "Session 1")
+          : `Followed by Session ${round.number}`;
         label.append(el("b", "", sessionLabel), el("span", "", `${round.matches.length} ${round.matches.length === 1 ? "match" : "matches"}`));
         const grid = el("div", "fixture-session__grid");
         round.matches.forEach(match => grid.append(fixtureCard(match)));
